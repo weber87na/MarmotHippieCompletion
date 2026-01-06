@@ -5,6 +5,7 @@
         <DisplayName>MarmotHippieCompletion</DisplayName>
         <Description xml:space="preserve">Marmot Hippie Completion (The poor man's Rider/ReSharper alternative)
 Supported Version: Microsoft Visual Studio Community 2022 (64-bit) - Version 17.13.1</Description>
+        <MoreInfo>https://github.com/weber87na/MarmotHippieCompletion/tree/master/MarmotHippieCompletion</MoreInfo>
         <Icon>MarmotPostfix128.png</Icon>
         <PreviewImage>MarmotPostfix200.png</PreviewImage>
         <Tags>C#, Hippie, Completion, IntelliSense, Productivity, Snippet, Free, Editor, Template, Cyclic, Expand</Tags>
