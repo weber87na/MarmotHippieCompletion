@@ -12,36 +12,46 @@ namespace MarmotHippieCompletion
 {
     internal sealed class CyclicExpandCommand
     {
-        // 1. 這些 GUID 必須與你的 .vsct 檔案一致
+        // 1. 命令識別碼 (必須與 .vsct 檔案一致)
         public static readonly Guid CommandSet = new Guid("20364af1-7375-4f7d-85ce-eecd51338918");
-        public const int CommandId = 0x0100;
+        public const int ForwardCommandId = 0x0100;
+        public const int BackwardCommandId = 0x0101;
 
         private readonly AsyncPackage package;
         private readonly WordCycleService _service = new WordCycleService();
 
-        // 私有建構子：由 Initialize 呼叫
         private CyclicExpandCommand(AsyncPackage package, OleMenuCommandService commandService)
         {
             this.package = package ?? throw new ArgumentNullException(nameof(package));
 
-            // 將命令註冊到選單系統
-            var menuCommandID = new CommandID(CommandSet, CommandId);
-            var menuItem = new MenuCommand(this.Execute, menuCommandID);
-            commandService.AddCommand(menuItem);
+            if (commandService != null)
+            {
+                // 註冊正向循環命令 (Alt + /)
+                var forwardID = new CommandID(CommandSet, ForwardCommandId);
+                var forwardItem = new MenuCommand(this.Execute, forwardID);
+                commandService.AddCommand(forwardItem);
+
+                // 註冊反向循環命令 (Alt + Shift + /)
+                var backwardID = new CommandID(CommandSet, BackwardCommandId);
+                var backwardItem = new MenuCommand(this.Execute, backwardID);
+                commandService.AddCommand(backwardItem);
+            }
         }
 
         public static CyclicExpandCommand Instance { get; private set; }
 
-        // --- 這是你目前遺漏的核心方法 ---
         public static void Initialize(AsyncPackage package, OleMenuCommandService commandService)
         {
-            // ThreadHelper.ThrowIfNotOnUIThread(); // 如果是在 AsyncPackage 初始化，通常已經切換過執行緒
             Instance = new CyclicExpandCommand(package, commandService);
         }
 
         private void Execute(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
+
+            // 辨識是哪個命令被觸發
+            var menuCommand = sender as MenuCommand;
+            if (menuCommand == null) return;
 
             var textView = GetWpfTextView();
             if (textView == null) return;
@@ -50,24 +60,37 @@ namespace MarmotHippieCompletion
             SnapshotSpan wordSpan = FindWordBeforeCaret(caret);
             string currentWord = wordSpan.GetText();
 
-            // 如果不是連續按，就重新初始化循環搜尋
+            // 1. 初始化檢查：如果不是連續按，或是字串不匹配，就重新搜尋
             if (!_service.IsContinuing(currentWord))
             {
-                _service.Initialize(textView.TextSnapshot.GetText(), currentWord);
+                // 傳入目前的全文、前綴、以及游標位置（用於距離排序）
+                _service.Initialize(textView.TextSnapshot.GetText(), currentWord, caret.Position);
             }
 
-            string replacement = _service.GetNextMatch();
-
-            // 執行替換
-            using (var edit = textView.TextBuffer.CreateEdit())
+            // 2. 根據 Command ID 決定拿「下一個」還是「上一個」
+            string replacement;
+            if (menuCommand.CommandID.ID == BackwardCommandId)
             {
-                edit.Replace(wordSpan, replacement);
-                edit.Apply();
+                replacement = _service.GetPreviousMatch();
+            }
+            else
+            {
+                replacement = _service.GetNextMatch();
             }
 
-            // 將游標移動到新單字的末尾
-            var newPos = new SnapshotPoint(textView.TextSnapshot, wordSpan.Start + replacement.Length);
-            textView.Caret.MoveTo(newPos);
+            // 3. 執行替換文本
+            if (replacement != null)
+            {
+                using (var edit = textView.TextBuffer.CreateEdit())
+                {
+                    edit.Replace(wordSpan, replacement);
+                    edit.Apply();
+                }
+
+                // 4. 更新游標位置到單字末尾
+                var newPos = new SnapshotPoint(textView.TextSnapshot, wordSpan.Start + replacement.Length);
+                textView.Caret.MoveTo(newPos);
+            }
         }
 
         private IWpfTextView GetWpfTextView()
@@ -87,6 +110,7 @@ namespace MarmotHippieCompletion
         private SnapshotSpan FindWordBeforeCaret(SnapshotPoint caret)
         {
             int start = caret.Position;
+            // 搜尋條件：字母、數字或底線
             while (start > 0 && (char.IsLetterOrDigit(caret.Snapshot[start - 1]) || caret.Snapshot[start - 1] == '_'))
             {
                 start--;

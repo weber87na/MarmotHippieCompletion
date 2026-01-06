@@ -18,12 +18,22 @@
           <ButtonText>Marmot Cyclic Expand</ButtonText>
         </Strings>
       </Button>
+
+      <Button guid="guidMarmotPackageCmdSet" id="CyclicExpandBackwardId" priority="0x0101" type="Button">
+        <Parent guid="guidMarmotPackageCmdSet" id="MyMenuGroup" />
+        <Strings>
+          <ButtonText>Marmot Cyclic Expand Backward</ButtonText>
+        </Strings>
+      </Button>
     </Buttons>
   </Commands>
 
   <KeyBindings>
     <KeyBinding guid="guidMarmotPackageCmdSet" id="CyclicExpandId" 
                 editor="guidVSStd97" key1="Oem2" mod1="Alt" />
+    
+    <KeyBinding guid="guidMarmotPackageCmdSet" id="CyclicExpandBackwardId" 
+                editor="guidVSStd97" key1="Oem2" mod1="Alt Shift" />
   </KeyBindings>
 
   <Symbols>
@@ -32,6 +42,6 @@
     <GuidSymbol name="guidMarmotPackageCmdSet" value="{20364af1-7375-4f7d-85ce-eecd51338918}">
       <IDSymbol name="MyMenuGroup" value="0x1020" />
       <IDSymbol name="CyclicExpandId" value="0x0100" />
-    </GuidSymbol>
+      <IDSymbol name="CyclicExpandBackwardId" value="0x0101" /> </GuidSymbol>
   </Symbols>
 </CommandTable>
