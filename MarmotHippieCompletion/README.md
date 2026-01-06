@@ -1,4 +1,6 @@
-﻿# Marmot Hippie Completion
+﻿![demo](demo.gif)
+
+# Marmot Hippie Completion
 
 **A tribute to the classic `Hippie Completion`!** This is a fast completion tool built for Visual Studio 2022, designed to replicate the beloved **"Cyclic Expand Word"** feature found in the IntelliJ IDEA / JetBrains series.
 
